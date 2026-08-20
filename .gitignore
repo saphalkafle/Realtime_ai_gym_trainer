@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Conda / virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.*
