@@ -12,6 +12,6 @@ def main():
 
     if not render_login_page():
        return
-
+    st.write("Welcome to your AI gym trainer!!")
 if __name__ == "__main__":
     main()
