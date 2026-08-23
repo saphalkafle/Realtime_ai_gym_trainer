@@ -16,6 +16,6 @@ def render_login_page():
             st.error("Name cannot be empty...")
             return False
 
-        st.session_state["userame"] = username
+        st.session_state["username"] = username
         st.session_state["user_id"]= "1"
     return False
