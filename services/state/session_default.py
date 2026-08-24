@@ -16,7 +16,7 @@ def initial_session_default():
 
         #workout plan (set before starting)
         "workout_started":False,
-        "exercise_name":"squats",
+        "exercise_name":"Squats",
         "no_of_sets":3,
         "no_of_reps":10,
 
