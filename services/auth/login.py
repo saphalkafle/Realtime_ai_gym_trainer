@@ -10,6 +10,7 @@ def render_login_page():
     with st.form("login_form",clear_on_submit=False):
         username = st.text_input("Your Username",placeholder="Enter your username here")
         submit_button = st.form_submit_button("Enter the session")
+        
 
     if submit_button:
         if not username:
@@ -18,4 +19,5 @@ def render_login_page():
 
         st.session_state["username"] = username
         st.session_state["user_id"]= "1"
+        st.rerun()
     return False
