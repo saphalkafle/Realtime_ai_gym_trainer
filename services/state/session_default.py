@@ -5,6 +5,7 @@ def initial_session_default():
         "reps":0,
         "target_sets":0,
         "reps_per_set":0,
+        "time_per_sets":0.0,
         "sets_completed":0,
         "current_reps":0,
         "workout_complete":False,
@@ -19,6 +20,10 @@ def initial_session_default():
         "exercise_name":"Squats",
         "no_of_sets":3,
         "no_of_reps":10,
+        "timer_end_at":0.0,
+        "timer_running":False,
+        "timer_minutes":0,
+        "timer_seconds":0,
 
         #common Angles
         "knee_angle":0,
@@ -27,6 +32,7 @@ def initial_session_default():
         "back_angle":0,
         "elbow_angle":0,
         "torso_angle":0,
+        "wrist_angle":0,
         "front_knee_angle":0,
 
         #status fields
