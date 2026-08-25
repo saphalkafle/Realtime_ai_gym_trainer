@@ -1,10 +1,13 @@
 Exercise_options = {
     "Squats",
-    "Normal Push-up",
-    "Diamond Push-up",
-    "Mountain climbers",
-    "Planks",
-    "Lunges",
+    "Push-up",
+    "Burpees",
     "Pull-ups",
+    "Lunges",
+
+    #TIME BASED
+    "Planks",
+    "Jumping Jack",
+    "Mountain climbers",
     "Leg-Raises"
 }
