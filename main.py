@@ -1,8 +1,11 @@
 import streamlit as st
+import os
 from services.state.session_default import initial_session_default
 from services.auth.login import render_login_page
 from services.config.workout_names import Exercise_options
 import time
+from services.ui.style_loader import load_css , inject_local_font
+
 
 def main():
     st.set_page_config(
@@ -11,6 +14,9 @@ def main():
        initial_sidebar_state="expanded",
        layout="centered"
     )
+
+    load_css(os.path.join(os.getcwd(),"static","style.css"))
+    inject_local_font(os.path.join(os.getcwd(),"static","Baloo_2","Baloo2-VariableFont_wght.ttf"),"AdobeClean")
 
     if not render_login_page():
        return
@@ -111,22 +117,69 @@ def main():
 
            st.divider()
 
+
            if exercise == "Squats":
-              st.subheader("Squat Metrics")
-              st.metric("knee Angle",f"{st.session_state.knee_angle}°")
-              st.metric("Back Angle",f"{st.session_state.back_angle}°")
-              st.metric("Depth Status",st.session_state.depth_status)
+               st.subheader("Squat Metrics")
+               st.metric("Knee Angle", f"{st.session_state.knee_angle}°")
+               st.metric("Back Angle", f"{st.session_state.back_angle}°")
+               st.metric("Depth Status", st.session_state.depth_status)
 
            if exercise == "Push-up":
-              st.subheader("Push-up Metrics")
-              st.metric("Body Alignment",st.session_state.body_alignment)
-              st.metric("Elbow Angle",f"{st.session_state.elbow_angle}°")
-              st.metric("Hip Status",st.session_state.hip_status)
-              st.metric("Shoulder status",st.session_state.shoulder_status)
+               st.subheader("Push-up Metrics")
+               st.metric("Body Alignment", st.session_state.body_alignment)
+               st.metric("Elbow Angle", f"{st.session_state.elbow_angle}°")
+               st.metric("Hip Status", st.session_state.hip_status)
+               st.metric("Shoulder Status", st.session_state.shoulder_status)
+
+           if exercise == "Burpees":
+               st.subheader("Burpee Metrics")
+               st.metric("Hip Angle", f"{st.session_state.hip_angle}°")
+               st.metric("Elbow Angle", f"{st.session_state.elbow_angle}°")
+               st.metric("Body Alignment", st.session_state.body_alignment)
+               st.metric("Composite Movement", st.session_state.composite_movement)
+
+           if exercise == "Pull-ups":
+               st.subheader("Pull-up Metrics")
+               st.metric("Elbow Angle", f"{st.session_state.elbow_angle}°")
+               st.metric("Shoulder Status", st.session_state.shoulder_status)
+               st.metric("Extension Status", st.session_state.extension_status)
+               st.metric("Back Arch Status", st.session_state.back_arch_status)
+
+           if exercise == "Lunges":
+               st.subheader("Lunge Metrics")
+               st.metric("Front Knee Angle", f"{st.session_state.front_knee_angle}°")
+               st.metric("Back Knee Angle", f"{st.session_state.knee_angle}°")
+               st.metric("Hip Angle", f"{st.session_state.hip_angle}°")
+               st.metric("Balance Status", st.session_state.balance_status)
+
+            # TIME BASED
+           if exercise == "Planks":
+               st.subheader("Plank Metrics")
+               st.metric("Back Angle", f"{st.session_state.back_angle}°")
+               st.metric("Hip Angle", f"{st.session_state.hip_angle}°")
+               st.metric("Body Alignment", st.session_state.body_alignment)
+
+           if exercise == "Jumping Jack":
+               st.subheader("Jumping Jack Metrics")
+               st.metric("Wrist Angle", f"{st.session_state.wrist_angle}°")
+               st.metric("Swing Status", st.session_state.swing_status)
+               st.metric("Composite Movement", st.session_state.composite_movement)
+
+           if exercise == "Mountain climbers":
+               st.subheader("Mountain Climber Metrics")
+               st.metric("Knee Angle", f"{st.session_state.knee_angle}°")
+               st.metric("Hip Angle", f"{st.session_state.hip_angle}°")
+               st.metric("Torso Angle", f"{st.session_state.torso_angle}°")
+               st.metric("Composite Movement", st.session_state.composite_movement)
+
+           if exercise == "Leg-Raises":
+               st.subheader("Leg Raise Metrics")
+               st.metric("Hip Angle", f"{st.session_state.hip_angle}°")
+               st.metric("Torso Angle", f"{st.session_state.torso_angle}°")
+               st.metric("Extension Status", st.session_state.extension_status)
 
 
-
-        
- 
+                  
+            
 if __name__ == "__main__":
     main()
