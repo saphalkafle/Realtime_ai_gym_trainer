@@ -1,0 +1,38 @@
+import sqlite3
+import streamlit as st
+from pathlib import Path
+
+
+#database path
+_DB_PATH = str(Path(__file__).parent.parent.parent/"data.db") 
+
+# _ means this function is only used for this file
+@st.cache_resource #decorator when running 2nd time it will be from cache
+def _get_connection():
+    conn = sqlite3.connect(_DB_PATH,check_same_thread = False)
+    conn.row_factory = sqlite3.row  #for finding row even when changes
+    return conn
+
+#creating table
+def init_db():
+
+    conn = _get_connection()
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS exercise(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        exercise_name TEXT UNIQUE NOT NULL,
+        reps INTEGER NOT NULL DEFAULT 0,
+        sets INTEGER NOT NULL DEFAULT O,
+        time INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
