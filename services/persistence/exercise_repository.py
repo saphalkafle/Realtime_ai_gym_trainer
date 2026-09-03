@@ -21,7 +21,7 @@ def init_db():
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
+            username TEXT UNIQUE NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
     """)
 
@@ -36,3 +36,33 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+
+#for authentication
+def get_user(username):
+    conn = _get_connection()
+
+    return conn.execute("""
+
+        SELECT * FROM users WHERE username = ?
+""", (username)).fetchone()
+
+
+def create_user(username):
+    conn = _get_connection()
+
+    with conn:
+        conn.execute("""
+            INSERT INTO users (username) VALUES (?)
+        """,(username))
+
+    return get_user(username) #return it to get user
+
+def get_or_create_user(username):
+    user = get_user(username)
+
+    if user is None:
+        user = create_user(username)
+
+    return user
+
