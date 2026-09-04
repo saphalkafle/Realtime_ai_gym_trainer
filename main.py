@@ -5,6 +5,8 @@ from services.auth.login import render_login_page
 from services.config.workout_names import Exercise_options
 import time
 from services.ui.style_loader import load_css , inject_local_font
+from services.persistence.exercise_repository import init_db
+from streamlit_webrtc import webrtc_streamer,WebRtcMode
 
 
 def main():
@@ -17,6 +19,9 @@ def main():
 
     load_css(os.path.join(os.getcwd(),"static","style.css"))
     inject_local_font(os.path.join(os.getcwd(),"static","Baloo_2","Baloo2-VariableFont_wght.ttf"),"AdobeClean")
+
+    init_db() #calling database
+
 
     if not render_login_page():
        return
@@ -73,12 +78,10 @@ def main():
             sets = st.session_state.get("no_of_sets")
             reps = st.session_state.get("no_of_reps")
             
-            
-            
-
+             
             st.info(f"**{exercise}** -- **{sets} Sets**  X **{reps} Reps**")
 
-            end_session_button = st.button("End session" , width = "stretch",key="end_session_button")
+            end_session_button = st.button("End Workout" , width = "stretch",key="end_session_button")
 
             if end_session_button:
                st.session_state["workout_started"] = False
@@ -179,7 +182,52 @@ def main():
                st.metric("Extension Status", st.session_state.extension_status)
 
 
-                  
-            
+    st.title("Real-Time AI GYM Trainer")
+    st.markdown("Real-Time form Detection with Proactive AI voice Trainer")   
+
+    if not workout_started:
+        st.markdown("""
+            <div style="
+                border: 10px dashed #444;
+                border-radius: 0px;
+                padding: 48px 32px;
+                text-align: center;
+                color: #888;
+                margin-top: 32px;
+            ">
+                <h2 style="color:#ccc; margin-bottom:8px;">👉 Set your workout plan</h2>
+                <p style="font-size:1.05rem;">
+                    Choose your exercise, sets and reps in the sidebar,<br>
+                    then click <strong>Start Workout</strong> to activate the camera and AI Trainer
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    else:
+        context = webrtc_streamer(
+            key = "exercise-analysis",
+            mode = WebRtcMode.SENDRECV,
+            video_processor_factory = None,
+            rtc_configuration = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            media_stream_constraints = {
+                "video":True,
+                "audio":False
+            },
+            async_processing=True
+        )
+
+
+
+    
+
+
+
+
+
+
+
+
+
+        
 if __name__ == "__main__":
     main()
