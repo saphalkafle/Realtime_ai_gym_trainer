@@ -10,7 +10,7 @@ _DB_PATH = str(Path(__file__).parent.parent.parent/"data.db")
 @st.cache_resource #decorator when running 2nd time it will be from cache
 def _get_connection():
     conn = sqlite3.connect(_DB_PATH,check_same_thread = False)
-    conn.row_factory = sqlite3.row  #for finding row even when changes
+    conn.row_factory = sqlite3.Row  #for finding row even when changes
     return conn
 
 #creating table
@@ -45,7 +45,7 @@ def get_user(username):
     return conn.execute("""
 
         SELECT * FROM users WHERE username = ?
-""", (username)).fetchone()
+    """, (username,)).fetchone()
 
 
 def create_user(username):
@@ -54,7 +54,7 @@ def create_user(username):
     with conn:
         conn.execute("""
             INSERT INTO users (username) VALUES (?)
-        """,(username))
+        """,(username,))
 
     return get_user(username) #return it to get user
 
