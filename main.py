@@ -4,9 +4,10 @@ from services.state.session_default import initial_session_default
 from services.auth.login import render_login_page
 from services.config.workout_names import Exercise_options
 import time
-from services.ui.style_loader import load_css , inject_local_font
+from services.ui.style_loader import load_css , inject_local_font,inject_webrtc_styles
 from services.persistence.exercise_repository import init_db
 from streamlit_webrtc import webrtc_streamer,WebRtcMode
+
 
 
 def main():
@@ -215,6 +216,11 @@ def main():
             },
             async_processing=True
         )
+
+
+        #for workout history
+    st.markdown("### Workout History")
+    inject_webrtc_styles(os.path.join(os.getcwd(),"static","Baloo_2","Baloo2-VariableFont_wght.ttf"),"AdobeClean")
 
 
 
