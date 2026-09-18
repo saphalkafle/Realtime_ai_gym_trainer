@@ -32,4 +32,21 @@ class SquatDetector(BaseExercise):
 
 
 
+    def reset(self):
+        self.reps = 0
+        self.stage = None
+
+    def process(self,landmarks):
+        left_knee_angle = self.calculate_angle(
+            self.get_point(landmarks,self.LEFT_HIP),
+            self.get_point(landmarks,self.LEFT_KNEE),
+            self.get_point(landmarks,self.LEFT_ANKLE),
+        )
+
+        right_knee_angle = self.calculate_angle(
+            self.get_point(landmarks,self.RIGHT_HIP),
+            self.get_point(landmarks,self.RIGHT_KNEE),
+            self.get_point(landmarks,self.RIGHT_ANKLE),
+        )
+
     
