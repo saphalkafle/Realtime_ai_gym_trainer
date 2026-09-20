@@ -71,6 +71,29 @@ class SquatDetector(BaseExercise):
             and landmarks[ankle_idx].visibility >= self.MIN_VISIBILITY
         )
 
+        if key_landmark_visible:
+            if knee_angle < self.DOWN_THRESHOLD:
+                self.stage = "down"
+
+            if knee_angle > self.UP_THRESHOLD and self.stage == "down":
+                self.stage = "up"
+                self.reps += 1
+
+        if self.stage == "down":
+            depth_status = "GOOD DEPTH" if knee_angle <= self.DOWN_THRESHOLD else "HIGH"
+        elif self.stage == "up":
+            depth_status = "STANDING"
+        else:
+            depth_status = "N/A"
+
+        return{
+            "reps": self.reps,
+            "knee_angle": int(knee_angle),
+            "back_angle" : int(back_angle),
+            "depth_status": depth_status
+        }
+
+        
 
         
 
