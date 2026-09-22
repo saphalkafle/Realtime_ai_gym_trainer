@@ -27,6 +27,10 @@ def main():
     if not render_login_page():
        return
 
+    for key in ("exercise_name", "no_of_sets", "no_of_reps", "timer_minutes", "timer_seconds"):
+        if key in st.session_state:
+            st.session_state[key] = st.session_state[key]
+
     initial_session_default()
 
     workout_started = st.session_state.get("workout_started",False)
