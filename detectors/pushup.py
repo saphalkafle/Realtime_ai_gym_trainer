@@ -31,4 +31,39 @@ class Pushup(BaseExercise):
         self.reps = 0
         self.stage = "None"
 
-    
+    def process(self,landmarks):
+        
+        left_visibility = landmarks[self.LEFT_ELBOW]
+        right_visibility = landmarks[self.RIGHT_ELBOW]
+
+        if left_visibility >= right_visibility :
+            shoulder_idx = self.LEFT_SHOULDER
+            elbow_idx = self.LEFT_ELBOW
+            wrist_idx = self.LEFT_WRITST
+
+        else:
+            shoulder_idx = self.RIGHT_SHOULDER
+            elbow_idx = self.RIGHT_ELBOW
+            wrist_idx = self.RIGHT_WRITST
+
+        elbow_angle = self.calculate_angle(
+            self.get_point(landmarks,shoulder_idx),
+            self.get_point(landmarks,elbow_idx),
+            self.get_point(landmarks,wrist_idx)
+        )
+
+        key_landmark_visible = (
+            landmarks[shoulder_idx].visibility >= self.MIN_VISIBILITY
+            and landmarks[elbow_idx].visibility >= self.MIN_VISIBILITY
+            and landmarks[wrist_idx].visibility >= self.MIN_VISIBILITY )
+
+        if key_landmark_visible:
+            if elbow_angle < self.PUSHUP_DOWN_THRESHOLD:
+                self.stage = "down"
+
+            if elbow_angle > self.PUSHUP_up_THRESHOLD and self.stage == "down":
+                self.stage = "up"
+                self.reps += 1
+           
+
+            
