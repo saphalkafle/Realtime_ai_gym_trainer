@@ -169,7 +169,7 @@ def main():
 
            if exercise == "Jumping Jack":
                st.subheader("Jumping Jack Metrics")
-               st.metric("Wrist Angle", f"{st.session_state.wrist_angle}°")
+               st.metric("Wrist Angle", f"{st.session_state.shoulder_angle}°")
                st.metric("Swing Status", st.session_state.swing_status)
                st.metric("Composite Movement", st.session_state.composite_movement)
 
