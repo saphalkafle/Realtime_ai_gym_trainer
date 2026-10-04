@@ -61,6 +61,7 @@ class Pushup(BaseExercise):
             self.get_point(landmarks,hip_idx),
             self.get_point(landmarks,ankle_idx)
         )
+        
 
         shoulder_y = landmarks[shoulder_idx].y #while pushup y and x axis is taken
         ankle_y = landmarks[ankle_idx].y
