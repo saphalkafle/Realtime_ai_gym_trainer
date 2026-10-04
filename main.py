@@ -156,8 +156,7 @@ def main():
            if exercise == "Lunges":
                st.subheader("Lunge Metrics")
                st.metric("Front Knee Angle", f"{st.session_state.front_knee_angle}°")
-               st.metric("Back Knee Angle", f"{st.session_state.knee_angle}°")
-               st.metric("Hip Angle", f"{st.session_state.hip_angle}°")
+               st.metric("Torso Angle", f"{st.session_state.torso_angle}°")
                st.metric("Balance Status", st.session_state.balance_status)
 
             # TIME BASED
@@ -225,16 +224,6 @@ def main():
         #for workout history
     st.markdown("### Workout History")
     inject_webrtc_styles(os.path.join(os.getcwd(),"static","Baloo_2","Baloo2-VariableFont_wght.ttf"),"AdobeClean")
-
-
-
-    
-
-
-
-
-
-
 
 
 
