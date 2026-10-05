@@ -4,10 +4,11 @@ Exercise_options = [
     "Burpees",
     "Pull-ups",
     "Lunges",
+    "Leg-Raises",
 
     # TIME BASED
     "Planks",
     "Jumping Jack",
     "Mountain climbers",
-    "Leg-Raises",
+    
 ]
