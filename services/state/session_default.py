@@ -33,6 +33,7 @@ def initial_session_default():
         "elbow_angle":0,
         "torso_angle":0,
         "wrist_angle":0,
+        "shoulder_angle":0,
         "front_knee_angle":0,
 
         #status fields
