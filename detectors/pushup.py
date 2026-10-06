@@ -39,14 +39,14 @@ class Pushup(BaseExercise):
         if left_visibility >= right_visibility :
             shoulder_idx = self.LEFT_SHOULDER
             elbow_idx = self.LEFT_ELBOW
-            wrist_idx = self.LEFT_WRITST
+            wrist_idx = self.LEFT_WRIST
             hip_idx = self.LEFT_HIP
             ankle_idx = self.LEFT_ANKLE
 
         else:
             shoulder_idx = self.RIGHT_SHOULDER
             elbow_idx = self.RIGHT_ELBOW
-            wrist_idx = self.RIGHT_WRITST
+            wrist_idx = self.RIGHT_WRIST
             hip_idx = self.RIGHT_HIP
             ankle_idx = self.RIGHT_ANKLE
 
@@ -80,7 +80,7 @@ class Pushup(BaseExercise):
             if elbow_angle < self.PUSHUP_DOWN_THRESHOLD:
                 self.stage = "down"
 
-            if elbow_angle > self.PUSHUP_up_THRESHOLD and self.stage == "down":
+            if elbow_angle > self.PUSHUP_UP_THRESHOLD and self.stage == "down":
                 self.stage = "up"
                 self.reps += 1
 
@@ -103,7 +103,8 @@ class Pushup(BaseExercise):
             "reps" : self.reps,
             "elbow_angle" : int(elbow_angle),
             "hip_status" : hip_status,
-            "body_alignment" : body_alignment
+            "body_alignment" : body_alignment,
+            
 
         }
 
