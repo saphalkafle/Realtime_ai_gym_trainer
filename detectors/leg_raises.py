@@ -1,16 +1,16 @@
 from core.base_exercise import BaseExercise
+import math
 
 
 class LegRaiseDetector(BaseExercise):
 
-    # Hip angle thresholds
-    LEGRAISE_UP_THRESHOLD = 70
+    # Hip angle (shoulder-hip-knee): 180 = legs flat, 90 = legs straight up
+    LEGRAISE_UP_THRESHOLD = 100     # was 70, which needs legs past vertical
     LEGRAISE_DOWN_THRESHOLD = 150
 
-    # Knee extension
+    # Knee angle (hip-knee-ankle): above this the leg counts as straight
     KNEE_STRAIGHT_THRESHOLD = 150
 
-    # Visibility
     MIN_VISIBILITY = 0.7
 
     # Upper body
@@ -34,9 +34,7 @@ class LegRaiseDetector(BaseExercise):
 
     def process(self, landmarks):
 
-     
-        #  Calculate visibility of both sides
-
+        # Average visibility of each side
         left_visibility = (
             landmarks[self.LEFT_SHOULDER].visibility
             + landmarks[self.LEFT_HIP].visibility
@@ -51,32 +49,21 @@ class LegRaiseDetector(BaseExercise):
             + landmarks[self.RIGHT_ANKLE].visibility
         ) / 4
 
-      
-        # Select the more visible side
-        
-
+        # Use the better-seen side
         if left_visibility >= right_visibility:
-
             shoulder_idx = self.LEFT_SHOULDER
             hip_idx = self.LEFT_HIP
             knee_idx = self.LEFT_KNEE
             ankle_idx = self.LEFT_ANKLE
-
         else:
-
             shoulder_idx = self.RIGHT_SHOULDER
             hip_idx = self.RIGHT_HIP
             knee_idx = self.RIGHT_KNEE
             ankle_idx = self.RIGHT_ANKLE
 
-        # Check landmark visibility
-       
-
-        key_landmark_visible = (
-            landmarks[shoulder_idx].visibility >= self.MIN_VISIBILITY
-            and landmarks[hip_idx].visibility >= self.MIN_VISIBILITY
-            and landmarks[knee_idx].visibility >= self.MIN_VISIBILITY
-            and landmarks[ankle_idx].visibility >= self.MIN_VISIBILITY
+        key_landmark_visible = all(
+            landmarks[idx].visibility >= self.MIN_VISIBILITY
+            for idx in (shoulder_idx, hip_idx, knee_idx, ankle_idx)
         )
 
         if not key_landmark_visible:
@@ -84,59 +71,46 @@ class LegRaiseDetector(BaseExercise):
                 "reps": self.reps,
                 "hip_angle": 0,
                 "torso_angle": 0,
-                "extension_status": "N/A"
+                "extension_status": "N/A",
             }
 
-
-
+        # Hip angle: shoulder -> hip -> knee (how far the legs are lifted)
         hip_angle = self.calculate_angle(
             self.get_point(landmarks, shoulder_idx),
             self.get_point(landmarks, hip_idx),
-            self.get_point(landmarks, knee_idx)
+            self.get_point(landmarks, knee_idx),
         )
 
-
+        # Knee angle: hip -> knee -> ankle (are the legs straight?)
         knee_angle = self.calculate_angle(
             self.get_point(landmarks, hip_idx),
             self.get_point(landmarks, knee_idx),
-            self.get_point(landmarks, ankle_idx)
+            self.get_point(landmarks, ankle_idx),
         )
 
-        
-        # Calculate torso angle
+        # Torso angle: tilt of the shoulder-hip line from horizontal.
+        # 0 = back flat on the floor, bigger = upper body lifting off.
+        dx = abs(landmarks[hip_idx].x - landmarks[shoulder_idx].x)
+        dy = abs(landmarks[hip_idx].y - landmarks[shoulder_idx].y)
+        torso_angle = math.degrees(math.atan2(dy, dx))
 
-        torso_angle = self.calculate_angle(
-            self.get_point(landmarks, shoulder_idx),
-            self.get_point(landmarks, hip_idx),
-            self.get_point(landmarks, knee_idx)
-        )
-
-        
-        # Check leg extension
+        # Leg extension
         if knee_angle >= self.KNEE_STRAIGHT_THRESHOLD:
             extension_status = "EXTENDED"
         else:
             extension_status = "BENT"
 
-        
-        # Rep detection
-        if knee_angle >= self.KNEE_STRAIGHT_THRESHOLD:
+        # Rep counting: legs up (and straight), then back down
+        if hip_angle < self.LEGRAISE_UP_THRESHOLD and knee_angle >= self.KNEE_STRAIGHT_THRESHOLD:
+            self.stage = "up"
 
-            if hip_angle < self.LEGRAISE_UP_THRESHOLD:
-                self.stage = "up"
+        elif hip_angle > self.LEGRAISE_DOWN_THRESHOLD and self.stage == "up":
+            self.stage = "down"
+            self.reps += 1
 
-            elif (
-                hip_angle > self.LEGRAISE_DOWN_THRESHOLD
-                and self.stage == "up"
-            ):
-                self.stage = "down"
-                self.reps += 1
-
-       
-        #  Return metrics to main.py
         return {
             "reps": self.reps,
             "hip_angle": int(hip_angle),
             "torso_angle": int(torso_angle),
-            "extension_status": extension_status
+            "extension_status": extension_status,
         }
