@@ -29,9 +29,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS exercise(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL REFERENCES users(id),
-        exercise_name TEXT UNIQUE NOT NULL,
+        exercise_name TEXT NOT NULL,
         reps INTEGER NOT NULL DEFAULT 0,
-        sets INTEGER NOT NULL DEFAULT O,
+        sets INTEGER NOT NULL DEFAULT 0,
         time INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -73,7 +73,7 @@ def add_exercise(user_id,exercise_name,reps,sets,time):
     with conn:
         existing = conn.execute("""
             SELECT * FROM exercise
-            WHERE user_id = ? AND exercise_name = ? AND Date('created_at') = Date('now')
+            WHERE user_id = ? AND exercise_name = ? AND DATE('created_at') = DATE('now')
         """,(user_id,exercise_name)).fetchone()
 
         if existing:
@@ -86,10 +86,10 @@ def add_exercise(user_id,exercise_name,reps,sets,time):
         else:
             conn.execute("""
                 INSERT INTO exercise (user_id,exercise_name,sets,reps,time)
-                VALUES (?,?,?,?)
+                VALUES (?,?,?,?,?)
             """,(user_id,exercise_name,reps,sets,time))
 
-def get_users_exercise(user_id):
+def get_users_exercise(user_id,):
     conn = _get_connection()
 
     return conn.execute("""
