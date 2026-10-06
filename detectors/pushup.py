@@ -1,6 +1,6 @@
 from core.base_exercise import BaseExercise
 
-class Pushup(BaseExercise):
+class PushupDetector(BaseExercise):
     PUSHUP_UP_THRESHOLD = 160
     PUSHUP_DOWN_THRESHOLD = 90
 
