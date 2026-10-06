@@ -189,7 +189,7 @@ def main():
                 st.metric("Body Alignment", st.session_state.body_alignment)
                 st.metric("Elbow Angle", f"{st.session_state.elbow_angle}°")
                 st.metric("Hip Status", st.session_state.hip_status)
-                st.metric("Shoulder Status", st.session_state.shoulder_status)
+                
 
             if exercise == "Burpees":
                 st.subheader("Burpee Metrics")
