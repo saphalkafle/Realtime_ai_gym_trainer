@@ -12,7 +12,7 @@ class MountainClimberDetector(BaseExercise):
     MAX_TORSO_ANGLE = 30
 
     # Lower than plank because the far-side leg is often partly hidden
-    MIN_VISIBILITY = 0.5
+    MIN_VISIBILITY = 0.7
 
     # Left side
     LEFT_SHOULDER = 11
