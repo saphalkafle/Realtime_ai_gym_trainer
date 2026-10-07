@@ -3,6 +3,16 @@ import threading
 from streamlit_webrtc import VideoProcessorBase
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from detectors.burpees import BurpeesDetector
+from detectors.jumping_jack import JumpingJackDetector
+from detectors.leg_raises import LegRaiseDetector
+from detectors.lunges import LungesDetector
+from detectors.Mountain_climber import MountainClimberDetector
+from detectors.plank import PlankDetector
+from detectors.pullup import PullupDetector
+from detectors.pushup import PushupDetector
+from detectors.squat import SquatDetector
+
 
 
 class VideoProcessorClass(VideoProcessorBase):
