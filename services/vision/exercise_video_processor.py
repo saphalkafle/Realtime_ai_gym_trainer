@@ -36,4 +36,18 @@ class VideoProcessorClass(VideoProcessorBase):
 
         self._landmarker = vision.PoseLandmarker.create_from_options(options)
 
+        self._detectors = {
+            "Squats": SquatDetector(),
+            "Push-up": PushupDetector(),
+            "Burpees": BurpeesDetector(),
+            "Pull-ups": PullupDetector(),
+            "Lunges": LungesDetector(),
+            "Planks": PlankDetector(),
+            "Jumping Jack": JumpingJackDetector(),
+            "Mountain climbers": MountainClimberDetector(),
+            "Leg-Raises": LegRaiseDetector(),
+        }
+
+        self._frame_timestamps_ms = 0
+
     
