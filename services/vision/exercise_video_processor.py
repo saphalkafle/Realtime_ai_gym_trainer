@@ -18,7 +18,7 @@ from detectors.squat import SquatDetector
 class VideoProcessorClass(VideoProcessorBase):
     def __init__(self):
         self._lock = threading.Lock()
-        self._latest_matrics = None
+        self._latest_metrics = None
         self._exercise_type = "Squats"
 
         model_path = os.path.join(os.getcwd(),"ml_models","pose_landmarker_full.task")
@@ -49,5 +49,25 @@ class VideoProcessorClass(VideoProcessorBase):
         }
 
         self._frame_timestamps_ms = 0
+
+    def set_latest_metrics(self,metrics):
+        with self._lock:
+            self._latest_metrics = metrics.copy()
+
+
+    def get_latest_metrics(self):
+        with self._lock:
+            return None if self._latest_metrics is None else self._latest_metrics.copy()
+
+
+    def set_exercise(self,exercise_type):
+        with self._lock:
+            self._exercise_type = exercise_type
+
+    def get_exercise(self):
+        with self._lock:
+            return self._exercise_type
+
+    
 
     
