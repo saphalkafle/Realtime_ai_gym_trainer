@@ -1,6 +1,8 @@
 import os
 import cv2
+import av
 import numpy as np
+import mediapipe as mp
 import threading
 from streamlit_webrtc import VideoProcessorBase
 from mediapipe.tasks import python
@@ -233,4 +235,35 @@ class VideoProcessorClass(VideoProcessorBase):
 
 
     def recv(self,frame):
-        image 
+        image = np.asarrya(
+            cv2.flip(frame.to_ndarray(format="bgr24"),1), #1 = left to right flip
+            dtype = np.uint8
+        )
+
+        mp_image = mp.Image(
+            image_format = mp.ImageFormat.SRGB,
+            data=cv2.cvtColor(image,cv2.COLOR_RGB2BGR)
+        )
+
+        self._frame_timestamps_ms += 30
+        result = self._landmarker.detect_for_video(mp_image,self._frame_timestamps_ms)
+
+        if result.pose_landmarks:
+            landmarks = result.pose_landmarks[0]
+
+            self._draw_skeleton(image,landmarks)
+
+            ex_type = self.get_exercise()
+
+            detector = self._detectors.get(ex_type)
+
+            if detector:
+                metrics = detector.process(landmarks)
+                self._draw_overlays(image,metrics,ex_type)
+
+                self.set_latest_metrics(metrics)
+
+        else:
+            self._draw_no_pose_warnings(image)
+
+        return av.VideoFrame.from_ndarray(image,format="bgr24")
