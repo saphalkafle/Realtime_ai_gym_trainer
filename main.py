@@ -4,10 +4,11 @@ import time
 import math
 from services.state.session_default import initial_session_default
 from services.auth.login import render_login_page
-from services.config.workout_names import Exercise_options
+from services.config.workout_config import Exercise_options
 from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_styles
 from services.persistence.exercise_repository import init_db
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
+from services.vision.exercise_video_processor import VideoProcessorClass
 
 
 # Exercises that are measured by TIME (per set) instead of REPS.
@@ -265,7 +266,7 @@ def main():
         context = webrtc_streamer(
             key="exercise-analysis",
             mode=WebRtcMode.SENDRECV,
-            video_processor_factory=None,
+            video_processor_factory=VideoProcessorClass,
             rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
             media_stream_constraints={
                 "video": True,
@@ -274,9 +275,11 @@ def main():
             async_processing=True
         )
 
+        inject_webrtc_styles(os.path.join(os.getcwd(), "static", "Baloo_2", "Baloo2-VariableFont_wght.ttf"), "AdobeClean")
+
     # for workout history
     st.markdown("### Workout History")
-    inject_webrtc_styles(os.path.join(os.getcwd(), "static", "Baloo_2", "Baloo2-VariableFont_wght.ttf"), "AdobeClean")
+    
 
 
 if __name__ == "__main__":
