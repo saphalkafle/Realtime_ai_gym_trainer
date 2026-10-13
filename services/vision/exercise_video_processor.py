@@ -235,14 +235,14 @@ class VideoProcessorClass(VideoProcessorBase):
 
 
     def recv(self,frame):
-        image = np.asarrya(
+        image = np.asarray(
             cv2.flip(frame.to_ndarray(format="bgr24"),1), #1 = left to right flip
             dtype = np.uint8
         )
 
         mp_image = mp.Image(
             image_format = mp.ImageFormat.SRGB,
-            data=cv2.cvtColor(image,cv2.COLOR_RGB2BGR)
+            data=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         )
 
         self._frame_timestamps_ms += 30
