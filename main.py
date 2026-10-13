@@ -9,6 +9,7 @@ from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_
 from services.persistence.exercise_repository import init_db
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from services.vision.exercise_video_processor import VideoProcessorClass
+from services.tracking.metrics import sync_metrics_update
 
 
 # Exercises that are measured by TIME (per set) instead of REPS.
@@ -85,53 +86,60 @@ def main():
         # BEFORE WORKOUT: plan inputs + Start button
         if not workout_started:
 
-            st.selectbox('Exercises', options=Exercise_options, key='exercise_name')
+            plan_exercise = st.selectbox('Exercises', options=Exercise_options, key='exercise_name')
+            plan_sets = st.number_input('Sets', min_value=0, max_value=20, key='no_of_sets', step=1)
 
-            st.number_input('Sets', min_value=0, max_value=20, key='no_of_sets', step=1)
+            # defaults so both variables always exist
+            plan_reps = 0
+            plan_for_time_based = 0
 
-            # Reps only make sense for rep-based exercises, so hide it for timed ones
-                        # Reps only for rep-based exercises, timer only for timed exercises
-            is_timed_selected = st.session_state.get("exercise_name") in TIMED_EXERCISES
+            is_timed = plan_exercise in TIMED_EXERCISES
 
-            if is_timed_selected:
+            if is_timed:
                 # Duration of ONE set (timed exercises only)
                 minute, seconds = st.columns(2)
 
                 with minute:
-                    st.number_input('minutes', min_value=0, max_value=15, key='timer_minutes')
+                    plan_minutes = st.number_input('minutes', min_value=0, max_value=15, key='timer_minutes')
 
                 with seconds:
-                    st.number_input('seconds', min_value=0, max_value=60, step=5, key="timer_seconds")
+                    plan_seconds = st.number_input('seconds', min_value=0, max_value=60, step=5, key='timer_seconds')
+
+                plan_for_time_based = int(plan_minutes) * 60 + int(plan_seconds)
             else:
-                st.number_input('Reps', min_value=0, max_value=60, key="no_of_reps", step=1)
+                plan_reps = st.number_input('Reps', min_value=0, max_value=60, key='no_of_reps', step=1)
 
             st.markdown("")  # for space
 
             start_session_button = st.button("Start Workout", width="stretch", key="start_session_button")
 
             if start_session_button:
-                is_timed = st.session_state.exercise_name in TIMED_EXERCISES
-
-                # Only timed exercises have a duration; rep-based ones don't use the timer
-                if is_timed:
-                    duration = st.session_state.timer_minutes * 60 + st.session_state.timer_seconds
-                else:
-                    duration = 0
-
-                # Validation
-                if is_timed and duration == 0:
+                if is_timed and plan_for_time_based == 0:
                     st.error("Set a timer greater than 0")
-                elif st.session_state.no_of_sets == 0:
+                elif int(plan_sets) == 0:
                     st.error("Set at least 1 set")
-                elif not is_timed and st.session_state.no_of_reps == 0:
+                elif not is_timed and int(plan_reps) == 0:
                     st.error("Set at least 1 rep")
                 else:
-                    st.session_state["set_duration"] = duration
-                    st.session_state["sets_completed"] = 0
-                    st.session_state["timer_end_at"] = time.time() + duration
-                    st.session_state["workout_started"] = True
-                    st.rerun()  # to make it work on one click
+                    # lock in the plan
+                    st.session_state.last_exercise_type = plan_exercise
+                    st.session_state.target_sets = int(plan_sets)
+                    st.session_state.reps_per_set = int(plan_reps)
+                    st.session_state.time_per_sets = int(plan_for_time_based)
 
+                    # reset progress
+                    st.session_state.reps = 0
+                    st.session_state.current_reps = 0
+                    st.session_state.sets_completed = 0
+                    st.session_state.workout_complete = False
+                    st.session_state.timer_end_at = time.time() + plan_for_time_based
+                    st.session_state.set_time_started_at = time.time()
+                    st.session_state.last_saved_sets_completed = 0
+                    st.session_state.last_notified_sets_completed = 0
+                    st.session_state.last_notified_workout_complete = False
+
+                    st.session_state.workout_started = True
+                    st.rerun()
 
         
         # DURING WORKOUT: summary, End button, progress, live metrics
@@ -274,6 +282,12 @@ def main():
             },
             async_processing=True
         )
+
+        sync_metrics_update(context)
+
+        if context.state.playing:
+            time.sleep(0.25)
+            st.rerun()
 
         inject_webrtc_styles(os.path.join(os.getcwd(), "static", "Baloo_2", "Baloo2-VariableFont_wght.ttf"), "AdobeClean")
 
