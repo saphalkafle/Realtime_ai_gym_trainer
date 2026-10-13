@@ -5,7 +5,7 @@ def initial_session_default():
         "reps":0,
         "target_sets":0,
         "reps_per_set":0,
-        "time_per_sets":0.0,
+        "time_per_sets":0,
         "sets_completed":0,
         "current_reps":0,
         "workout_complete":False,
@@ -13,7 +13,7 @@ def initial_session_default():
         "last_notified_workout_complete":False,
         "last_saved_sets_completed":0,
         "set_time_started_at":0.0,
-        "last_exercise_type":"squats",
+        "last_exercise_type":"Squats",
 
         #workout plan (set before starting)
         "workout_started":False,
