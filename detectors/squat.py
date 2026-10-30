@@ -8,7 +8,7 @@ class SquatDetector(BaseExercise):
     SQUAT_UP_THRESHOLD = 160
 
     # Visibility
-    MIN_VISIBILITY = 0.7
+    MIN_VISIBILITY = 0.5
 
     # Upper body
     LEFT_SHOULDER = 11
@@ -26,27 +26,24 @@ class SquatDetector(BaseExercise):
     LEFT_ANKLE = 27
     RIGHT_ANKLE = 28
 
-
     def __init__(self):
         super().__init__()
-
-
 
     def reset(self):
         self.reps = 0
         self.stage = None
 
-    def process(self,landmarks):
+    def process(self, landmarks):
         left_knee_angle = self.calculate_angle(
-            self.get_point(landmarks,self.LEFT_HIP),
-            self.get_point(landmarks,self.LEFT_KNEE),
-            self.get_point(landmarks,self.LEFT_ANKLE),
+            self.get_point(landmarks, self.LEFT_HIP),
+            self.get_point(landmarks, self.LEFT_KNEE),
+            self.get_point(landmarks, self.LEFT_ANKLE),
         )
 
         right_knee_angle = self.calculate_angle(
-            self.get_point(landmarks,self.RIGHT_HIP),
-            self.get_point(landmarks,self.RIGHT_KNEE),
-            self.get_point(landmarks,self.RIGHT_ANKLE),
+            self.get_point(landmarks, self.RIGHT_HIP),
+            self.get_point(landmarks, self.RIGHT_KNEE),
+            self.get_point(landmarks, self.RIGHT_ANKLE),
         )
 
         left_visibility = landmarks[self.LEFT_KNEE].visibility
@@ -54,15 +51,15 @@ class SquatDetector(BaseExercise):
 
         if left_visibility >= right_visibility:
             knee_angle = left_knee_angle
-            hip_idx,knee_idx,ankle_idx,shoulder_idx = self.LEFT_HIP,self.LEFT_KNEE,self.LEFT_ANKLE,self.LEFT_SHOULDER
+            hip_idx, knee_idx, ankle_idx, shoulder_idx = self.LEFT_HIP, self.LEFT_KNEE, self.LEFT_ANKLE, self.LEFT_SHOULDER
         else:
             knee_angle = right_knee_angle
-            hip_idx,knee_idx,ankle_idx,shoulder_idx = self.RIGHT_HIP,self.RIGHT_KNEE,self.RIGHT_ANKLE,self.RIGHT_SHOULDER
+            hip_idx, knee_idx, ankle_idx, shoulder_idx = self.RIGHT_HIP, self.RIGHT_KNEE, self.RIGHT_ANKLE, self.RIGHT_SHOULDER
 
         back_angle = self.calculate_angle(
-            self.get_point(landmarks,shoulder_idx),
-            self.get_point(landmarks,hip_idx),
-            self.get_point(landmarks,knee_idx)
+            self.get_point(landmarks, shoulder_idx),
+            self.get_point(landmarks, hip_idx),
+            self.get_point(landmarks, knee_idx)
         )
 
         key_landmark_visible = (
@@ -80,21 +77,16 @@ class SquatDetector(BaseExercise):
                 self.reps += 1
 
         if self.stage == "down":
-            depth_status = "GOOD DEPTH" if knee_angle <= self.DOWN_THRESHOLD else "HIGH"
+            # FIXED: was self.DOWN_THRESHOLD (does not exist) -> crashed the video thread
+            depth_status = "GOOD DEPTH" if knee_angle <= self.SQUAT_DOWN_THRESHOLD else "HIGH"
         elif self.stage == "up":
             depth_status = "STANDING"
         else:
             depth_status = "N/A"
 
-        return{
+        return {
             "reps": self.reps,
             "knee_angle": int(knee_angle),
-            "back_angle" : int(back_angle),
+            "back_angle": int(back_angle),
             "depth_status": depth_status
         }
-
-        
-
-        
-
-    
