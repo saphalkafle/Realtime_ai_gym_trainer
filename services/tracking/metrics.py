@@ -2,6 +2,7 @@ import streamlit as st
 from services.config.workout_config import METRICS_FIELDS
 import time
 from services.persistence.exercise_repository import add_exercise
+from services.config.workout_config import TIMED_EXERCISES
 
 
 def sync_metrics_update(context):
@@ -17,6 +18,9 @@ def sync_metrics_update(context):
 
     exercise = st.session_state.get("exercise_name")
 
+    if exercise in TIMED_EXERCISES:
+        return
+
     if not exercise:
         return
 
@@ -27,7 +31,7 @@ def sync_metrics_update(context):
     if not latest_metrics:
         return
 
-    reps = latest_metrics.get("reps")
+    reps = latest_metrics.get("reps") or 0
     st.session_state.reps = reps
 
     fields = METRICS_FIELDS.get(exercise)
@@ -53,7 +57,7 @@ def sync_metrics_update(context):
 
 
     st.session_state.sets_completed = sets_completed
-    st.session_state.current_set_reps = Current_no_of_reps
+    st.session_state.current_reps = Current_no_of_reps
     st.session_state.workout_completed = workout_completed
 
 
