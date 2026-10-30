@@ -5,6 +5,9 @@ Exercise_options = [
     "Pull-ups",
     "Lunges",
     "Leg-Raises",
+    "Planks",
+    "Jumping Jack", 
+    "Mountain climbers",
  
 ]
 TIMED_EXERCISES = {"Jumping Jack", "Planks", "Mountain climbers"}
