@@ -5,13 +5,13 @@ import math
 class LegRaiseDetector(BaseExercise):
 
     # Hip angle (shoulder-hip-knee): 180 = legs flat, 90 = legs straight up
-    LEGRAISE_UP_THRESHOLD = 100     # was 70, which needs legs past vertical
-    LEGRAISE_DOWN_THRESHOLD = 150
+    LEGRAISE_UP_THRESHOLD = 120     # was 70, which needs legs past vertical
+    LEGRAISE_DOWN_THRESHOLD = 140
 
     # Knee angle (hip-knee-ankle): above this the leg counts as straight
     KNEE_STRAIGHT_THRESHOLD = 150
 
-    MIN_VISIBILITY = 0.7
+    MIN_VISIBILITY = 0.5
 
     # Upper body
     LEFT_SHOULDER = 11
