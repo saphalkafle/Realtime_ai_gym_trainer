@@ -5,12 +5,9 @@ Exercise_options = [
     "Pull-ups",
     "Lunges",
     "Leg-Raises",
-
-    # TIME BASED
-    "Planks",
-    "Jumping Jack",
-    "Mountain climbers",
+ 
 ]
+TIMED_EXERCISES = {"Jumping Jack", "Planks", "Mountain climbers"}
 
 POSE_CONNECTIONS = [   #lines for detection
     (11, 12), (11, 13), (13, 15), (12, 14), (14, 16),       # Shoulders & Arms
