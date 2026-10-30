@@ -12,12 +12,13 @@ from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from services.vision.exercise_video_processor import VideoProcessorClass
 from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercise
+from services.config.workout_config import TIMED_EXERCISES
 
 
 
 # Exercises that are measured by TIME (per set) instead of REPS.
 # For these, the Reps input is hidden and the countdown timer is used.
-TIMED_EXERCISES = {"Jumping Jack", "Planks", "Mountain climbers"}
+
 
 
 
@@ -135,11 +136,12 @@ def main():
                     st.session_state.current_reps = 0
                     st.session_state.sets_completed = 0
                     st.session_state.workout_complete = False
-                    st.session_state.timer_end_at = time.time() + plan_for_time_based
+                    st.session_state.timer_end_at = None
                     st.session_state.set_time_started_at = time.time()
                     st.session_state.last_saved_sets_completed = 0
                     st.session_state.last_notified_sets_completed = 0
                     st.session_state.last_notified_workout_complete = False
+                    st.session_state.set_duration = int(plan_for_time_based)
 
                     st.session_state.workout_started = True
                     st.rerun()
@@ -288,9 +290,10 @@ def main():
 
         sync_metrics_update(context)
 
-        if context.state.playing:
-            time.sleep(0.25)
-            st.rerun()
+        if (context.state.playing
+                and exercise_is_timed
+                and st.session_state.get("timer_end_at") is None):
+            st.session_state.timer_end_at = time.time() + st.session_state["set_duration"]
 
         inject_webrtc_styles(os.path.join(os.getcwd(), "static", "Baloo_2", "Baloo2-VariableFont_wght.ttf"), "AdobeClean")
 
@@ -318,14 +321,16 @@ def main():
         df = pd.DataFrame(arr)
 
         if not df.empty:
+            # st.write("DataFrame columns:", df.columns.tolist())
+            # st.write(df.head())
             df["Date"] = pd.to_datetime(df["Date"]).dt.date
             agg_df = df.groupby(["Exercise","Date"]).agg({
                 "Reps":'sum',
                 "Sets":"sum",
-                "Time(sec)":"sum"
+                "Time":"sum"
             }).reset_index()
             agg_df.index += 1
-            st.table(df,border = "horizontal")
+            st.table(agg_df,border = "horizontal")
         else:
             st.info("No workout history found.")
     
