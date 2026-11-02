@@ -5,55 +5,57 @@ import math
 import pandas as pd
 from services.state.session_default import initial_session_default
 from services.auth.login import render_login_page
-from services.config.workout_config import Exercise_options
+from services.config.workout_config import Exercise_options, TIMED_EXERCISES
 from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_styles
-from services.persistence.exercise_repository import init_db 
+from services.persistence.exercise_repository import init_db, add_exercise
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from services.vision.exercise_video_processor import VideoProcessorClass
 from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercise
-from services.config.workout_config import TIMED_EXERCISES
 
 
+def remaining_seconds():
+    """Seconds left in the current set. Never stored, always calculated."""
+    end_at = st.session_state.get("timer_end_at")
+    if end_at is None:                       # camera not playing yet
+        return st.session_state.get("set_duration", 0)
+    return max(0, math.ceil(end_at - time.time()))
 
-# Exercises that are measured by TIME (per set) instead of REPS.
-# For these, the Reps input is hidden and the countdown timer is used.
 
+def tick_timer():
+    """Runs on every rerun. Finishes a timed set when the time is over."""
+    if not st.session_state.get("workout_started"):
+        return
 
+    exercise = st.session_state.get("exercise_name")
+    if exercise not in TIMED_EXERCISES:
+        return
 
+    end_at = st.session_state.get("timer_end_at")
+    if end_at is None:                       # camera not playing yet
+        return
+    if time.time() < end_at:                 # still counting down
+        return
 
-# COUNTDOWN
-# run_every=1 -> Streamlit re-runs ONLY this function every second.
-# That way the timer ticks without restarting the whole app (and the camera).
-#
-# The remaining time is never stored. It is always calculated as:
-#       timer_end_at - current_time
-# so it can't freeze or drift.
-@st.fragment(run_every=1)
-def countdown_display():
-    remaining = max(0, int(math.ceil(st.session_state["timer_end_at"] - time.time())))
-    minutes, seconds = divmod(remaining, 60)
-    st.metric("Remaining time", f"{minutes}:{seconds:02d}")
+    # ---- the set is finished ----
+    duration = st.session_state.get("set_duration", 0)
+    st.session_state.sets_completed += 1
 
-    # Current set finished
-    if remaining <= 0:
-        st.session_state["sets_completed"] += 1
+    # save to history: 0 reps, 1 set, `duration` seconds
+    add_exercise(st.session_state.get("user_id", 0), exercise, 0, 1, duration)
 
-        if st.session_state["sets_completed"] >= st.session_state["no_of_sets"]:
-            # All sets done -> end the workout
-            st.session_state["workout_started"] = False
-        else:
-            # More sets left -> start the next set with the full duration again
-            # (set_duration was saved when Start was pressed)
-            st.session_state["timer_end_at"] = time.time() + st.session_state["set_duration"]
+    if st.session_state.sets_completed >= st.session_state.get("no_of_sets", 1):
+        st.session_state.workout_started = False   # camera stops (not rendered)
+        st.session_state.timer_end_at = None
+    else:
+        st.session_state.timer_end_at = time.time() + duration   # next set
 
-        # Full app rerun so the sidebar and camera reflect the new state
-        st.rerun()
+    st.rerun()
 
 
 def main():
     st.set_page_config(
-        page_icon="bodybuilder",
+        page_icon="💪",
         page_title="AI Real-time Gym Trainer",
         initial_sidebar_state="expanded",
         layout="centered"
@@ -73,6 +75,7 @@ def main():
             st.session_state[key] = st.session_state[key]
 
     initial_session_default()
+    tick_timer()   # finish timed sets BEFORE the sidebar is drawn
 
     workout_started = st.session_state.get("workout_started", False)
 
@@ -86,7 +89,6 @@ def main():
 
         st.subheader("Workout Plan")
 
-        
         # BEFORE WORKOUT: plan inputs + Start button
         if not workout_started:
 
@@ -136,7 +138,7 @@ def main():
                     st.session_state.current_reps = 0
                     st.session_state.sets_completed = 0
                     st.session_state.workout_complete = False
-                    st.session_state.timer_end_at = None
+                    st.session_state.timer_end_at = None   # set when the camera is playing
                     st.session_state.set_time_started_at = time.time()
                     st.session_state.last_saved_sets_completed = 0
                     st.session_state.last_notified_sets_completed = 0
@@ -146,9 +148,7 @@ def main():
                     st.session_state.workout_started = True
                     st.rerun()
 
-        
         # DURING WORKOUT: summary, End button, progress, live metrics
-
         if workout_started:
 
             exercise = st.session_state.get("exercise_name")
@@ -183,7 +183,8 @@ def main():
                 current_set = min(set_completed + 1, target_sets)
                 st.metric("Current set", f"{current_set}/{target_sets}")
                 st.metric("Sets completed", f"{set_completed}/{target_sets}")
-                countdown_display()  # ticks every second on its own
+                m, sec = divmod(remaining_seconds(), 60)
+                st.metric("Remaining time", f"{m}:{sec:02d}")
             else:
                 # Rep-based exercise: show reps and sets
                 st.metric("Total Reps", f"{Total_no_of_reps}")
@@ -203,7 +204,6 @@ def main():
                 st.metric("Body Alignment", st.session_state.body_alignment)
                 st.metric("Elbow Angle", f"{st.session_state.elbow_angle}°")
                 st.metric("Hip Status", st.session_state.hip_status)
-                
 
             if exercise == "Burpees":
                 st.subheader("Burpee Metrics")
@@ -234,7 +234,7 @@ def main():
 
             if exercise == "Jumping Jack":
                 st.subheader("Jumping Jack Metrics")
-                st.metric("Shoulder Angle", f"{st.session_state.shoulder_angle}°")  # label fixed
+                st.metric("Shoulder Angle", f"{st.session_state.shoulder_angle}°")
                 st.metric("Swing Status", st.session_state.swing_status)
                 st.metric("Composite Movement", st.session_state.composite_movement)
 
@@ -251,9 +251,7 @@ def main():
                 st.metric("Torso Angle", f"{st.session_state.torso_angle}°")
                 st.metric("Extension Status", st.session_state.extension_status)
 
-   
     # MAIN PAGE
-
     st.title("Real-Time AI GYM Trainer")
     st.markdown("Real-Time form Detection with Proactive AI voice Trainer")
 
@@ -276,24 +274,33 @@ def main():
             """, unsafe_allow_html=True)
 
     else:
+        exercise_is_timed = st.session_state.get("exercise_name") in TIMED_EXERCISES
+        camera_exercise = st.session_state.get("exercise_name", "Squats")
+
         context = webrtc_streamer(
             key="exercise-analysis",
             mode=WebRtcMode.SENDRECV,
-            video_processor_factory=VideoProcessorClass,
+            video_processor_factory=lambda: VideoProcessorClass(camera_exercise),
             rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
             media_stream_constraints={
-                "video": True,
-                "audio": False
+                "video": {"width": {"ideal": 640}, "height": {"ideal": 480}, "frameRate": {"ideal": 15}},
+                "audio": False,
             },
-            async_processing=True
+            async_processing=True,
         )
 
         sync_metrics_update(context)
 
+        # start the countdown only when the camera is really playing
         if (context.state.playing
                 and exercise_is_timed
                 and st.session_state.get("timer_end_at") is None):
             st.session_state.timer_end_at = time.time() + st.session_state["set_duration"]
+
+        # keep the page refreshing while the camera runs
+        if context.state.playing:
+            time.sleep(0.25)
+            st.rerun()
 
         inject_webrtc_styles(os.path.join(os.getcwd(), "static", "Baloo_2", "Baloo2-VariableFont_wght.ttf"), "AdobeClean")
 
@@ -301,39 +308,37 @@ def main():
     # for workout history
     st.markdown("### Workout History")
 
-    user_id = st.session_state.get("user_id",0)
+    user_id = st.session_state.get("user_id", 0)
 
-    if isinstance(user_id,int):
+    if isinstance(user_id, int):
         history_rows = get_users_exercise(user_id)
 
         arr = [
             {
                 "Exercise": row['exercise_name'],
-                "Reps":row['reps'],
-                "Sets":row['sets'],
-                "Time":row['time'],
-                "Date":row['created_at']
+                "Reps": row['reps'],
+                "Sets": row['sets'],
+                "Time": row['time'],
+                "Date": row['created_at']
             }
             for row in history_rows
         ]
 
-        #converting arr into df
+        # converting arr into df
         df = pd.DataFrame(arr)
 
         if not df.empty:
-            # st.write("DataFrame columns:", df.columns.tolist())
-            # st.write(df.head())
             df["Date"] = pd.to_datetime(df["Date"]).dt.date
-            agg_df = df.groupby(["Exercise","Date"]).agg({
-                "Reps":'sum',
-                "Sets":"sum",
-                "Time":"sum"
+            agg_df = df.groupby(["Exercise", "Date"]).agg({
+                "Reps": 'sum',
+                "Sets": "sum",
+                "Time": "sum"
             }).reset_index()
+            agg_df = agg_df.rename(columns={"Time": "Time (sec)"})
             agg_df.index += 1
-            st.table(agg_df,border = "horizontal")
+            st.table(agg_df, border="horizontal")
         else:
             st.info("No workout history found.")
-    
 
 
 if __name__ == "__main__":
