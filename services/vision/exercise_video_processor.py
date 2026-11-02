@@ -4,6 +4,7 @@ import av
 import numpy as np
 import mediapipe as mp
 import threading
+import traceback
 from streamlit_webrtc import VideoProcessorBase
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -20,10 +21,10 @@ from services.config.workout_config import POSE_CONNECTIONS
 
 
 class VideoProcessorClass(VideoProcessorBase):
-    def __init__(self):
+    def __init__(self, exercise_type="Squats"):
         self._lock = threading.Lock()
         self._latest_metrics = None
-        self._exercise_type = "Squats"
+        self._exercise_type = exercise_type
 
         model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
         base_option = python.BaseOptions(model_asset_path=model_path)
@@ -31,9 +32,9 @@ class VideoProcessorClass(VideoProcessorBase):
         options = vision.PoseLandmarkerOptions(
             base_options=base_option,
             running_mode=vision.RunningMode.VIDEO,
-            min_pose_detection_confidence=0.7,
-            min_pose_presence_confidence=0.7,
-            min_tracking_confidence=0.7,
+            min_pose_detection_confidence=0.5,
+            min_pose_presence_confidence=0.5,
+            min_tracking_confidence=0.5,
             output_segmentation_masks=False,
         )
 
@@ -76,7 +77,7 @@ class VideoProcessorClass(VideoProcessorBase):
             p1 = landmarks[start_idx]
             p2 = landmarks[end_idx]
 
-            if p1.visibility > 0.7 and p2.visibility > 0.7:
+            if p1.visibility > 0.5 and p2.visibility > 0.5:
                 cv2.line(
                     img,
                     (int(p1.x * w), int(p1.y * h)),  # starting point
@@ -86,7 +87,7 @@ class VideoProcessorClass(VideoProcessorBase):
                 )
 
         for lm in landmarks:
-            if lm.visibility > 0.7:
+            if lm.visibility > 0.5:
                 cv2.circle(
                     img,
                     (int(lm.x * w), int(lm.y * h)),
@@ -152,9 +153,7 @@ class VideoProcessorClass(VideoProcessorBase):
             cv2.LINE_AA,
         )
 
-    
     # overlay dispatcher
-
     def _draw_overlays(self, img, metrics, ex_type):
         if ex_type == "Squats":
             self._draw_squats_overlays(img, metrics)
@@ -233,37 +232,46 @@ class VideoProcessorClass(VideoProcessorBase):
         self._put_status(img, f"HIP: {f(metrics, 'hip_angle', True)} | TORSO: {f(metrics, 'torso_angle', True)}", 1)
         self._put_status(img, f"EXT: {f(metrics, 'extension_status')}", 0)
 
-
-    def recv(self,frame):
+    def recv(self, frame):
         image = np.asarray(
-            cv2.flip(frame.to_ndarray(format="bgr24"),1), #1 = left to right flip
-            dtype = np.uint8
+            cv2.flip(frame.to_ndarray(format="bgr24"), 1),  # 1 = left to right flip
+            dtype=np.uint8,
         )
 
-        mp_image = mp.Image(
-            image_format = mp.ImageFormat.SRGB,
-            data=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-        )
+        # Everything that can fail is inside try/except. If this thread ever
+        # raises, the video freezes, so we print the error and keep going.
+        try:
+            mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB,
+                data=cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
+            )
 
-        self._frame_timestamps_ms += 30
-        result = self._landmarker.detect_for_video(mp_image,self._frame_timestamps_ms)
+            self._frame_timestamps_ms += 30
+            result = self._landmarker.detect_for_video(mp_image, self._frame_timestamps_ms)
 
-        if result.pose_landmarks:
-            landmarks = result.pose_landmarks[0]
+            if result.pose_landmarks:
+                landmarks = result.pose_landmarks[0]
+                self._draw_skeleton(image, landmarks)
 
-            self._draw_skeleton(image,landmarks)
+                ex_type = self.get_exercise()
+                detector = self._detectors.get(ex_type)
 
-            ex_type = self.get_exercise()
+                if detector:
+                    metrics = dict(detector.process(landmarks))
+                    metrics["exercise"] = ex_type   # lets the app ignore stale data
+                    self._draw_overlays(image, metrics, ex_type)
+                    self.set_latest_metrics(metrics)
+            else:
+                self._draw_no_pose_warnings(image)
 
-            detector = self._detectors.get(ex_type)
+        except Exception:
+            traceback.print_exc()
 
-            if detector:
-                metrics = detector.process(landmarks)
-                self._draw_overlays(image,metrics,ex_type)
+        return av.VideoFrame.from_ndarray(image, format="bgr24")
 
-                self.set_latest_metrics(metrics)
-
-        else:
-            self._draw_no_pose_warnings(image)
-
-        return av.VideoFrame.from_ndarray(image,format="bgr24")
+    def on_ended(self):
+        # called when the stream stops: free the MediaPipe model
+        try:
+            self._landmarker.close()
+        except Exception:
+            pass
