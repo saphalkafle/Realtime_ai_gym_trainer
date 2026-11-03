@@ -12,6 +12,10 @@ from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from services.vision.exercise_video_processor import VideoProcessorClass
 from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercise
+from groq import Groq
+from services.coaching.llm import LLMCoach
+from services.coaching.tts import TextToSpeech
+from services.coaching.voice_pipeline import VoicePipeline,autoplay_audio
 
 
 def remaining_seconds():
@@ -77,6 +81,22 @@ def main():
     initial_session_default()
     tick_timer()   # finish timed sets BEFORE the sidebar is drawn
 
+
+    if "voice_pipeline" not in st.session_state:
+        try:
+            api_key = os.environ.get("GROQ_API_KEY","")
+
+            if not api_key and hasattr(st,"secrets") and "GROQ_API_KEY" in st.secrets:
+                api_key = st.secrets["GROQ_API_KEY"]
+
+            groq_client = Groq(api_key=api_key)
+            llm_coach = LLMCoach(groq_client)
+            tts = TextToSpeech()
+            st.session_state.voice_pipeline = VoicePipeline(llm_coach,tts)  #to find fnx in session_state easily
+
+        except Exception as e:
+            st.session_state.voice_pipeline = None
+
     workout_started = st.session_state.get("workout_started", False)
 
     with st.sidebar:
@@ -141,9 +161,24 @@ def main():
                     st.session_state.timer_end_at = None   # set when the camera is playing
                     st.session_state.set_time_started_at = time.time()
                     st.session_state.last_saved_sets_completed = 0
+
+
+                    #for voice pipeline
+                    if st.session_state.voice_pipeline:
+                        result = st.session_state.voice_pipeline.process_event(
+                            event = "wokout_started",
+                            exercise = plan_exercise,
+                            metrics={}
+                    )
+                        if result:
+                            st.session_state.audio_to_play,st.session_state.coach_feedback = result
+
+
                     st.session_state.last_notified_sets_completed = 0
                     st.session_state.last_notified_workout_complete = False
                     st.session_state.set_duration = int(plan_for_time_based)
+
+                   
 
                     st.session_state.workout_started = True
                     st.rerun()
@@ -254,6 +289,13 @@ def main():
     # MAIN PAGE
     st.title("Real-Time AI GYM Trainer")
     st.markdown("Real-Time form Detection with Proactive AI voice Trainer")
+
+    if st.session_state.get("audio_to_play"):
+        autoplay_audio(st.session_state.audio_to_play)
+
+    if st.session_state.get("coach_feedback"):
+        st.markdown("")
+        st.success("**Coach:** {st.session_state.coach_feedback}")
 
     if not workout_started:
         st.markdown("""
