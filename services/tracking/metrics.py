@@ -2,6 +2,7 @@ import streamlit as st
 import time
 from services.config.workout_config import METRICS_FIELDS, TIMED_EXERCISES
 from services.persistence.exercise_repository import add_exercise
+import main
 
 
 def sync_metrics_update(context):
@@ -69,8 +70,29 @@ def sync_metrics_update(context):
 
         add_exercise(user_id, exercise, newly_completed * reps_per_set, newly_completed, time_taken)
 
+        if st.session_state.get("voice_pipeline"):
+            result = st.session_state.voice_pipeline.process_event(
+                event = "set_completed",
+                exercise = exercise,
+                metrics = latest_metrics,
+            )
+
         st.session_state.set_time_started_at = now_ts
         st.session_state.last_saved_sets_completed = sets_completed
+
+
+    if workout_completed and not st.session_state.get("last_notified_workout_complete",False):
+        st.session_state.last_notified_workout_complete = True
+
+        if st.session_state.get("voice_pipeline"):
+            result = st.session_state.voice_pipeline.process_event(
+                event="workout_completed",
+                exercise=exercise,
+                metrics=latest_metrics
+            )
+
+            if result:
+                st.session_state.audio_to_play,st.session_state.coach_feedback = result
 
     
     if workout_complete:
