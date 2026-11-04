@@ -258,11 +258,18 @@ class VideoProcessorClass(VideoProcessorBase):
 
                 if detector:
                     metrics = dict(detector.process(landmarks))
+                    metrics["pose_detected"] = True
                     metrics["exercise"] = ex_type   # lets the app ignore stale data
                     self._draw_overlays(image, metrics, ex_type)
                     self.set_latest_metrics(metrics)
             else:
                 self._draw_no_pose_warnings(image)
+
+                with self._lock:
+                    if self._latest_metrics is not None:
+                        self._latest_metrics["pose_detected"] = False
+                    else:
+                        self._latest_metrics = {"pose_detected":False}
 
         except Exception:
             traceback.print_exc()
