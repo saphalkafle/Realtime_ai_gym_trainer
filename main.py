@@ -295,7 +295,7 @@ def main():
 
     if st.session_state.get("coach_feedback"):
         st.markdown("")
-        st.success("**Coach:** {st.session_state.coach_feedback}")
+        st.success(f"**Coach:** {st.session_state.coach_feedback}")
 
     if not workout_started:
         st.markdown("""

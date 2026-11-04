@@ -8,11 +8,15 @@ class TextToSpeech:
         if not cleaned:
             return
 
+        try:
+            buffer = BytesIO()
+            gTTS(text = cleaned,lang=lang).write_to_fp(buffer)
+            buffer.seek(0)  #change pointer to first location
 
-        buffer = BytesIO()
-        gTTS(text = cleaned,lang=lang).write_to_fp(buffer)
-        buffer.seek(0)  #change pointer to first location
+            return buffer.read()
+        except Exception as e:
+            print("TTs error:",e)
+            return None
 
-        return buffer.read()
 
 
