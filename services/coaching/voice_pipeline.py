@@ -70,7 +70,7 @@ class VoicePipeline:
                 checks = [
                     ("jj_incomplete", movement == "INCOMPLETE",
                     "The user is not completing the jumping jack — arms fully up with legs wide, then fully down.", 2.0),
-                ]
+                ] 
             elif exercise == "Mountain climbers":
                 checks = [
                     ("mc_posture", movement == "BAD POSTURE",
